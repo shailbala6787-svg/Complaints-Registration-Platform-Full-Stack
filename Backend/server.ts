@@ -104,7 +104,9 @@ app.post('/api/auth/send-otp', async (req: Request, res: Response) => {
         });
     }
 
-    await sendOTPEmail(email, otp);
+    // Send email in the background to avoid blocking the user response
+    sendOTPEmail(email, otp).catch(err => console.error('Background Email Error:', err));
+    
     res.json({ message: 'OTP sent successfully' });
   } catch (err) {
     console.error('OTP Error:', err);

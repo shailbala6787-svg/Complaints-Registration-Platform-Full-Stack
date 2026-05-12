@@ -33,5 +33,11 @@ export const sendOTPEmail = async (email: string, otp: string) => {
     `,
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`OTP Email sent successfully to ${email}`);
+  } catch (error) {
+    console.error('Nodemailer Error:', error);
+    throw error; // Re-throw so the background .catch can see it
+  }
 };

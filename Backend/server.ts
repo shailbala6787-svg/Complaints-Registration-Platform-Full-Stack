@@ -27,10 +27,19 @@ app.get('/api/test-db', async (req: Request, res: Response) => {
 
 const frontendPort = process.env.FRONTEND_PORT || 5500;
 app.use(cors({
-  origin: [
-    `http://localhost:${frontendPort}`,
-    `http://127.0.0.1:${frontendPort}`
-  ],
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      `http://localhost:${frontendPort}`,
+      `http://127.0.0.1:${frontendPort}`,
+      /\.github\.io$/ // Allow any GitHub Pages domain
+    ];
+    
+    if (!origin || allowedOrigins.some(ao => ao instanceof RegExp ? ao.test(origin) : ao === origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());

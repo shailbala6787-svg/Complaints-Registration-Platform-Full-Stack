@@ -1,4 +1,10 @@
-const BACKEND_BASE_URL = 'http://localhost:3000';
+// Update this URL after deploying your backend to Render
+const PRODUCTION_BACKEND_URL = 'https://complaints-registration-backend.onrender.com'; 
+
+const BACKEND_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : PRODUCTION_BACKEND_URL;
+
 const API_BASE = `${BACKEND_BASE_URL}/api`;
 const app = {
     user: null,

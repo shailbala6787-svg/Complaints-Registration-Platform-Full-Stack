@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaints Registration Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation Bar -->
+        <nav id="navbar" class="hidden">
+            <div class="nav-content">
+                <h1 id="logo">ComplainAI</h1>
+                <div class="nav-links">
+                    <button id="nav-my-complaints" class="nav-btn user-only hidden">My Complaints</button>
+                    <button id="nav-admin-dashboard" class="nav-btn admin-only hidden">Admin Dashboard</button>
+                    <button id="logout-btn" class="nav-btn logout">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <main id="main-content">
+            <div id="loading-spinner" class="spinner-overlay hidden">
+                <div class="spinner"></div>
+            </div>
+            
+            <div id="page-container">
+                <!-- Pages will be injected here -->
+            </div>
+        </main>
+
+        <div id="toast-container"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,4 +1,5 @@
-const API_BASE = 'http://localhost:3000/api';
+const BACKEND_BASE_URL = 'http://localhost:3000';
+const API_BASE = `${BACKEND_BASE_URL}/api`;
 const app = {
     user: null,
     token: localStorage.getItem('token'),

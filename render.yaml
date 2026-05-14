@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: complaints-registration-backend
+    runtime: node
+    buildCommand: npm install && npm run build --prefix Backend
+    startCommand: npm start --prefix Backend
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: PORT
+        value: 3000
+      - key: FRONTEND_PORT
+        value: 5500
+      - fromGroup: complaints-secrets # Assumes you have a secret group named this

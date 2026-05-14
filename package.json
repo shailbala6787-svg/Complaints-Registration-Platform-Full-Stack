@@ -1,0 +1,16 @@
+{
+  "name": "complaints-registration-platform",
+  "version": "1.0.0",
+  "description": "Full-stack complaints registration platform",
+  "private": true,
+  "scripts": {
+    "install:backend": "npm install --prefix Backend",
+    "build:backend": "npm run build --prefix Backend",
+    "start:backend": "npm start --prefix Backend",
+    "build": "npm run build:backend",
+    "start": "npm run start:backend"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

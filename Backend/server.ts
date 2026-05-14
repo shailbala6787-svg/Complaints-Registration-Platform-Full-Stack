@@ -25,31 +25,33 @@ app.get('/api/test-db', async (req: Request, res: Response) => {
   }
 });
 
+// Request logger - Move to top to catch all requests including CORS
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 const frontendPort = process.env.FRONTEND_PORT || 5500;
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow all origins in development or matching patterns
+    const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
     const allowedOrigins = [
       `http://localhost:${frontendPort}`,
       `http://127.0.0.1:${frontendPort}`,
-      /\.github\.io$/ // Allow any GitHub Pages domain
+      /\.github\.io$/ 
     ];
     
-    if (!origin || allowedOrigins.some(ao => ao instanceof RegExp ? ao.test(origin) : ao === origin)) {
+    if (isDevelopment || !origin || allowedOrigins.some(ao => ao instanceof RegExp ? ao.test(origin) : ao === origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
     }
   },
   credentials: true
 }));
 app.use(express.json());
 app.use(cookieParser());
-
-// Request logger
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
 
 // --- Middleware ---
 
@@ -255,6 +257,15 @@ app.get('/api/admin/complaints', authenticate, isAdmin, async (req: Request, res
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch all complaints' });
   }
+});
+
+// Global error handler
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('[Unhandled Error]', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 });
 
 app.listen(PORT, () => {

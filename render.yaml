@@ -2,8 +2,9 @@ services:
   - type: web
     name: complaints-registration-backend
     runtime: node
-    buildCommand: cd Backend && npm install && npm run build
-    startCommand: cd Backend && npm start
+    rootDirectory: Backend
+    buildCommand: npm install && npm run build && ls -R dist
+    startCommand: npm start
     envVars:
       - key: NODE_VERSION
         value: 18.17.0

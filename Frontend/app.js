@@ -5,7 +5,7 @@ const BACKEND_BASE_URL =
     window.location.hostname === '127.0.0.1' || 
     window.location.hostname === '[::1]' ||
     window.location.protocol === 'file:'
-        ? 'http://localhost:3000'
+        ? 'http://127.0.0.1:3000'
         : PRODUCTION_BACKEND_URL;
 
 console.log(`[App] Using Backend URL: ${BACKEND_BASE_URL}`);
@@ -198,10 +198,7 @@ const app = {
                 }
             } catch (err) {
                 console.error('Login error:', err);
-                const isNetworkError = err instanceof TypeError && err.message.includes('fetch');
-                errorDiv.textContent = isNetworkError 
-                    ? `Cannot reach server at ${BACKEND_BASE_URL}. Please ensure the backend is running.`
-                    : 'An unexpected error occurred during login.';
+                errorDiv.textContent = `Cannot reach server at ${BACKEND_BASE_URL}. Please ensure the backend is running (run 'npm start' in the Backend folder).`;
                 errorDiv.style.display = 'block';
             } finally {
                 this.showLoading(false);

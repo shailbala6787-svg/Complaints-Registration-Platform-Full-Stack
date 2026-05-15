@@ -3,8 +3,7 @@ services:
     name: complaints-registration-backend
     runtime: node
     rootDirectory: Backend
-    rootDirectory: Backend
-    buildCommand: npm install
+    buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_VERSION

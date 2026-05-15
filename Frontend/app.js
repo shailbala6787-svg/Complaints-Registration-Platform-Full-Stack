@@ -1,12 +1,17 @@
 
 const PRODUCTION_BACKEND_URL = 'https://complaints-registration-platform-full-aoil.onrender.com/';
-const BACKEND_BASE_URL =
-    window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.hostname === '[::1]' ||
-        window.location.protocol === 'file:'
-        ? 'http://127.0.0.1:3000'
-        : PRODUCTION_BACKEND_URL;
+const BACKEND_BASE_URL = (() => {
+    const hn = window.location.hostname;
+    const isLocal = 
+        hn === 'localhost' || 
+        hn === '127.0.0.1' || 
+        hn === '[::1]' ||
+        hn === '0.0.0.0' ||
+        /^(127|192\.168|10|172\.(1[6-9]|2[0-9]|3[0-1]))\./.test(hn) ||
+        hn.endsWith('.local') ||
+        window.location.protocol === 'file:';
+    return isLocal ? 'http://127.0.0.1:3000' : PRODUCTION_BACKEND_URL;
+})();
 
 console.log(`[App] Using Backend URL: ${BACKEND_BASE_URL}`);
 

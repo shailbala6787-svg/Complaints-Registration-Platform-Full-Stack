@@ -15,6 +15,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
+// Health check route for Render and monitoring
+app.get('/', (req: Request, res: Response) => {
+  res.json({ status: 'ok', message: 'Backend is running' });
+});
+
 app.get('/api/test-db', async (req: Request, res: Response) => {
   try {
     const result = await db.execute('SELECT 1');

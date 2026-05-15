@@ -2,15 +2,12 @@
 const PRODUCTION_BACKEND_URL = 'https://complaints-registration-platform-full-aoil.onrender.com/';
 const BACKEND_BASE_URL = (() => {
     const hn = window.location.hostname;
-    const isLocal = 
-        hn === 'localhost' || 
-        hn === '127.0.0.1' || 
-        hn === '[::1]' ||
-        hn === '0.0.0.0' ||
-        /^(127|192\.168|10|172\.(1[6-9]|2[0-9]|3[0-1]))\./.test(hn) ||
-        hn.endsWith('.local') ||
-        window.location.protocol === 'file:';
-    return isLocal ? 'http://127.0.0.1:3000' : PRODUCTION_BACKEND_URL;
+    // If we are on Render or GitHub Pages, use the production URL.
+    // Otherwise (localhost, local IP, etc.), use the local backend.
+    const isProduction = hn.includes('onrender.com') || hn.includes('github.io');
+    const url = isProduction ? PRODUCTION_BACKEND_URL : 'http://127.0.0.1:3000';
+    console.log(`[App] Host: ${hn} -> Backend: ${url}`);
+    return url;
 })();
 
 console.log(`[App] Using Backend URL: ${BACKEND_BASE_URL}`);

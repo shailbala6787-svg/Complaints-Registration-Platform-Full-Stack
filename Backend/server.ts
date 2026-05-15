@@ -44,7 +44,8 @@ app.use(cors({
     const allowedOrigins = [
       `http://localhost:${frontendPort}`,
       `http://127.0.0.1:${frontendPort}`,
-      /\.github\.io$/ 
+      /\.github\.io$/,
+      /https:\/\/.*\.github\.io$/ // Explicitly allow https versions
     ];
     
     if (isDevelopment || !origin || allowedOrigins.some(ao => ao instanceof RegExp ? ao.test(origin) : ao === origin)) {
@@ -163,10 +164,11 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role, name: user.name }, JWT_SECRET);
     
+    const isProd = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
       httpOnly: false,
-      secure: false, // Localhost par false hi hona chahiye
-      sameSite: 'lax',
+      secure: isProd, 
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000
     });
 

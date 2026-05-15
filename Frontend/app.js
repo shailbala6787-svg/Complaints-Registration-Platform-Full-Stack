@@ -200,7 +200,8 @@ const app = {
                 }
             } catch (err) {
                 console.error('Login error:', err);
-                errorDiv.textContent = `Cannot reach server at ${BACKEND_BASE_URL}. Please ensure the backend is running (run 'npm start' in the Backend folder).`;
+                const statusInfo = err.message ? ` (${err.message})` : '';
+                errorDiv.textContent = `Cannot reach server at ${BACKEND_BASE_URL}${statusInfo}. Please check if the Render service is active and environment variables (DATABASE_URL, etc.) are set.`;
                 errorDiv.style.display = 'block';
             } finally {
                 this.showLoading(false);

@@ -1,14 +1,12 @@
 
-const PRODUCTION_BACKEND_URL = 'https://complaints-registration-platform-full-aoil.onrender.com/';
-const BACKEND_BASE_URL = (() => {
-    const hn = window.location.hostname;
-    // If we are on Render or GitHub Pages, use the production URL.
-    // Otherwise (localhost, local IP, etc.), use the local backend.
-    const isProduction = hn.includes('onrender.com') || hn.includes('github.io');
-    const url = isProduction ? PRODUCTION_BACKEND_URL : 'http://127.0.0.1:3000';
-    console.log(`[App] Host: ${hn} -> Backend: ${url}`);
-    return url;
-})();
+const PRODUCTION_BACKEND_URL = 'https://complaints-registration-platform-full-aoil.onrender.com';
+const BACKEND_BASE_URL =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === '[::1]' ||
+    window.location.protocol === 'file:'
+        ? 'http://127.0.0.1:3000'
+        : PRODUCTION_BACKEND_URL;
 
 console.log(`[App] Using Backend URL: ${BACKEND_BASE_URL}`);
 
@@ -254,7 +252,8 @@ const app = {
                 }
             } catch (err) {
                 console.error('Registration error:', err);
-                errorDiv.textContent = 'Server connection failed';
+                const info = err.message ? ` (${err.message})` : '';
+                errorDiv.textContent = `Server connection failed${info}. Please check if the Render service is awake.`;
                 errorDiv.style.display = 'block';
             } finally {
                 this.showLoading(false);
@@ -334,7 +333,9 @@ const app = {
                     errorDiv.style.display = 'block';
                 }
             } catch (err) {
-                errorDiv.textContent = 'Server connection failed';
+                console.error('Password setup error:', err);
+                const info = err.message ? ` (${err.message})` : '';
+                errorDiv.textContent = `Server connection failed${info}`;
                 errorDiv.style.display = 'block';
             } finally {
                 this.showLoading(false);

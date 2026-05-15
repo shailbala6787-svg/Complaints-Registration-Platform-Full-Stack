@@ -1,10 +1,10 @@
-const PRODUCTION_BACKEND_URL = 'https://complaints-registration-backend.onrender.com'; 
 
-const BACKEND_BASE_URL = 
-    window.location.hostname === 'localhost' || 
-    window.location.hostname === '127.0.0.1' || 
-    window.location.hostname === '[::1]' ||
-    window.location.protocol === 'file:'
+const PRODUCTION_BACKEND_URL = 'https://complaints-registration-platform-full-aoil.onrender.com/';
+const BACKEND_BASE_URL =
+    window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === '[::1]' ||
+        window.location.protocol === 'file:'
         ? 'http://127.0.0.1:3000'
         : PRODUCTION_BACKEND_URL;
 
@@ -15,7 +15,7 @@ const app = {
     user: null,
     token: localStorage.getItem('token'),
     currentPage: 'login',
-    
+
     init() {
         this.cacheDOM();
         this.bindEvents();
@@ -52,7 +52,7 @@ const app = {
         this.logoutBtn.addEventListener('click', () => this.handleLogout());
         this.navMyComplaints.addEventListener('click', () => this.navigate('my-complaints'));
         this.navAdminDashboard.addEventListener('click', () => this.navigate('admin-dashboard'));
-        
+
         // Handle browser back/forward (simplified for this SPA)
         window.onpopstate = (event) => {
             if (event.state && event.state.page) {

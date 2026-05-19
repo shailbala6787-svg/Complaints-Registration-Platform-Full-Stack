@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
 import { db } from './db';
 import { users, complaints } from './schema';
 import { eq, and } from 'drizzle-orm';
@@ -15,11 +16,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
-// Request logger - Move to top to catch all requests including CORS
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
+// Request logger using morgan
+app.use(morgan('dev'));
 
 const frontendPort = process.env.FRONTEND_PORT || 5500;
 app.use(cors({
@@ -29,9 +27,9 @@ app.use(cors({
     const allowedOrigins = [
       `http://localhost:${frontendPort}`,
       `http://127.0.0.1:${frontendPort}`,
-      /\.github\.io$/,
-      /https:\/\/.*\.github\.io$/ // Explicitly allow https versions
+      'https://shailbala6787-svg.github.io' // Explicitly allow the GitHub Pages origin
     ];
+
     
     if (isDevelopment || !origin || allowedOrigins.some(ao => ao instanceof RegExp ? ao.test(origin) : ao === origin)) {
       callback(null, true);
@@ -92,6 +90,7 @@ const isAdmin = (req: Request, res: Response, next: NextFunction) => {
 // --- Auth Routes ---
 
 app.post('/api/auth/send-otp', async (req: Request, res: Response) => {
+  console.log(`[Entry] POST /api/auth/send-otp - Email: ${req.body.email}`);
   const { name, email } = req.body;
   if (!name || !email) return res.status(400).json({ error: 'Name and email are required' });
 
@@ -125,14 +124,16 @@ app.post('/api/auth/send-otp', async (req: Request, res: Response) => {
     // Send email in the background to avoid blocking the user response
     sendOTPEmail(email, otp).catch(err => console.error('Background Email Error:', err));
     
+    console.log(`[Exit] POST /api/auth/send-otp - Success`);
     res.json({ message: 'OTP sent successfully' });
   } catch (err) {
-    console.error('OTP Error:', err);
+    console.error(`[Error] POST /api/auth/send-otp:`, err);
     res.status(500).json({ error: 'Failed to send OTP' });
   }
 });
 
 app.post('/api/auth/register', async (req: Request, res: Response) => {
+  console.log(`[Entry] POST /api/auth/register - Email: ${req.body.email}`);
   const { email, otp, password } = req.body;
   if (!email || !otp || !password) return res.status(400).json({ error: 'All fields are required' });
 
@@ -146,14 +147,16 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
       .set({ password, isVerified: true, otp: null, otpExpiry: null })
       .where(eq(users.email, email));
 
+    console.log(`[Exit] POST /api/auth/register - Success`);
     res.json({ message: 'Registration successful' });
   } catch (err) {
-    console.error(err);
+    console.error(`[Error] POST /api/auth/register:`, err);
     res.status(500).json({ error: 'Registration failed' });
   }
 });
 
 app.post('/api/auth/login', async (req: Request, res: Response) => {
+  console.log(`[Entry] POST /api/auth/login - Email: ${req.body.email}`);
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
@@ -165,47 +168,53 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role, name: user.name }, JWT_SECRET);
     
-    const isProd = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
-      httpOnly: false,
-      secure: isProd, 
-      sameSite: isProd ? 'none' : 'lax',
+      httpOnly: true,
+      secure: true, 
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000
     });
 
+    console.log(`[Exit] POST /api/auth/login - Success`);
     res.json({ name: user.name, email: user.email, role: user.role, token });
   } catch (err) {
-    console.error(err);
+    console.error(`[Error] POST /api/auth/login:`, err);
     res.status(500).json({ error: 'Login failed' });
   }
 });
 
 app.post('/api/auth/logout', (req: Request, res: Response) => {
+  console.log(`[Entry] POST /api/auth/logout`);
   res.clearCookie('token');
+  console.log(`[Exit] POST /api/auth/logout - Success`);
   res.json({ message: 'Logged out' });
 });
 
 app.get('/api/auth/me', authenticate, (req: Request, res: Response) => {
+  console.log(`[Entry] GET /api/auth/me - User: ${(req as any).user?.email}`);
+  console.log(`[Exit] GET /api/auth/me - Success`);
   res.json((req as any).user);
 });
 
 // --- Complaint Routes ---
 
 app.post('/api/ai/question', authenticate, async (req: Request, res: Response) => {
+  console.log(`[Entry] POST /api/ai/question`);
   const { complaint_text } = req.body;
   if (!complaint_text) return res.status(400).json({ error: 'Complaint text required' });
 
   try {
     const question = await generateFollowUpQuestion(complaint_text);
+    console.log(`[Exit] POST /api/ai/question - Success`);
     res.json({ question });
   } catch (err) {
-    console.error('AI Error (Fallback used):', err);
+    console.error(`[Error] POST /api/ai/question (Fallback used):`, err);
     res.json({ question: "Could you please provide any additional details that might help us resolve this faster?" });
   }
 });
 
 app.post('/api/complaints', authenticate, async (req: Request, res: Response) => {
-  console.log('Incoming complaint submission:', req.body);
+  console.log(`[Entry] POST /api/complaints`);
   const { complaint_text, ai_question, ai_answer } = req.body;
   const userId = (req as any).user.id;
 
@@ -221,14 +230,16 @@ app.post('/api/complaints', authenticate, async (req: Request, res: Response) =>
       userAnswer: ai_answer
     }).returning();
 
+    console.log(`[Exit] POST /api/complaints - Success`);
     res.json(newComplaint);
   } catch (err) {
-    console.error('Complaint Submission Error:', err);
+    console.error(`[Error] POST /api/complaints:`, err);
     res.status(500).json({ error: 'Failed to submit complaint' });
   }
 });
 
 app.get('/api/complaints/my', authenticate, async (req: Request, res: Response) => {
+  console.log(`[Entry] GET /api/complaints/my`);
   const userId = (req as any).user.id;
 
   try {
@@ -236,9 +247,10 @@ app.get('/api/complaints/my', authenticate, async (req: Request, res: Response) 
       where: eq(complaints.userId, userId),
       orderBy: (complaints, { desc }) => [desc(complaints.createdAt)]
     });
+    console.log(`[Exit] GET /api/complaints/my - Success`);
     res.json(myComplaints);
   } catch (err) {
-    console.error(err);
+    console.error(`[Error] GET /api/complaints/my:`, err);
     res.status(500).json({ error: 'Failed to fetch complaints' });
   }
 });
@@ -246,6 +258,7 @@ app.get('/api/complaints/my', authenticate, async (req: Request, res: Response) 
 // --- Admin Routes ---
 
 app.get('/api/admin/complaints', authenticate, isAdmin, async (req: Request, res: Response) => {
+  console.log(`[Entry] GET /api/admin/complaints`);
   try {
     const allComplaints = await db.select({
         id: complaints.id,
@@ -260,9 +273,10 @@ app.get('/api/admin/complaints', authenticate, isAdmin, async (req: Request, res
     .innerJoin(users, eq(complaints.userId, users.id))
     .orderBy(complaints.createdAt);
 
+    console.log(`[Exit] GET /api/admin/complaints - Success`);
     res.json(allComplaints);
   } catch (err) {
-    console.error(err);
+    console.error(`[Error] GET /api/admin/complaints:`, err);
     res.status(500).json({ error: 'Failed to fetch all complaints' });
   }
 });

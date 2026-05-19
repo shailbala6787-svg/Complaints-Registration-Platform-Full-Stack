@@ -30,7 +30,7 @@ app.use(cors({
       'https://shailbala6787-svg.github.io' // Explicitly allow the GitHub Pages origin
     ];
 
-    
+
     if (isDevelopment || !origin || allowedOrigins.some(ao => ao instanceof RegExp ? ao.test(origin) : ao === origin)) {
       callback(null, true);
     } else {
@@ -62,7 +62,7 @@ app.get('/api/test-db', async (req: Request, res: Response) => {
 
 const authenticate = (req: Request, res: Response, next: NextFunction) => {
   let token = req.cookies.token;
-  
+
   // Also check Authorization header
   if (!token && req.headers.authorization) {
     token = req.headers.authorization.split(' ')[1];
@@ -99,31 +99,31 @@ app.post('/api/auth/send-otp', async (req: Request, res: Response) => {
 
   try {
     const existingUser = await db.query.users.findFirst({ where: eq(users.email, email) });
-    
+
     if (existingUser) {
-        if (existingUser.isVerified) {
-            return res.status(400).json({ error: 'Email already registered and verified' });
-        }
-        // Update existing unverified user
-        await db.update(users)
-            .set({ name, otp, otpExpiry })
-            .where(eq(users.email, email));
+      if (existingUser.isVerified) {
+        return res.status(400).json({ error: 'Email already registered and verified' });
+      }
+      // Update existing unverified user
+      await db.update(users)
+        .set({ name, otp, otpExpiry })
+        .where(eq(users.email, email));
     } else {
-        // Create new unverified user
-        await db.insert(users).values({
-            name,
-            email,
-            password: '', // Placeholder until register
-            otp,
-            otpExpiry,
-            isVerified: false,
-            role: 'user'
-        });
+      // Create new unverified user
+      await db.insert(users).values({
+        name,
+        email,
+        password: '', // Placeholder until register
+        otp,
+        otpExpiry,
+        isVerified: false,
+        role: 'user'
+      });
     }
 
     // Send email in the background to avoid blocking the user response
     sendOTPEmail(email, otp).catch(err => console.error('Background Email Error:', err));
-    
+
     console.log(`[Exit] POST /api/auth/send-otp - Success`);
     res.json({ message: 'OTP sent successfully' });
   } catch (err) {
@@ -167,10 +167,10 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role, name: user.name }, JWT_SECRET);
-    
+
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true, 
+      secure: true,
       sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000
     });
@@ -261,17 +261,17 @@ app.get('/api/admin/complaints', authenticate, isAdmin, async (req: Request, res
   console.log(`[Entry] GET /api/admin/complaints`);
   try {
     const allComplaints = await db.select({
-        id: complaints.id,
-        complaintText: complaints.complaintText,
-        aiQuestion: complaints.aiQuestion,
-        userAnswer: complaints.userAnswer,
-        createdAt: complaints.createdAt,
-        userName: users.name,
-        userEmail: users.email
+      id: complaints.id,
+      complaintText: complaints.complaintText,
+      aiQuestion: complaints.aiQuestion,
+      userAnswer: complaints.userAnswer,
+      createdAt: complaints.createdAt,
+      userName: users.name,
+      userEmail: users.email
     })
-    .from(complaints)
-    .innerJoin(users, eq(complaints.userId, users.id))
-    .orderBy(complaints.createdAt);
+      .from(complaints)
+      .innerJoin(users, eq(complaints.userId, users.id))
+      .orderBy(complaints.createdAt);
 
     console.log(`[Exit] GET /api/admin/complaints - Success`);
     res.json(allComplaints);
@@ -284,9 +284,14 @@ app.get('/api/admin/complaints', authenticate, isAdmin, async (req: Request, res
 // Global error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('[Unhandled Error]', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error',
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+
+  // TypeScript instanceof एरर से बचने के लिए सेफ चेक
+  const statusCode = err && typeof err === 'object' && 'status' in err ? (err as any).status : 500;
+  const message = err && typeof err === 'object' && 'message' in err ? (err as any).message : 'Internal Server Error';
+
+  res.status(statusCode || 500).json({
+    error: message,
+    stack: process.env.NODE_ENV === 'development' ? err?.stack : undefined
   });
 });
 

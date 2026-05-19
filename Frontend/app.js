@@ -15,14 +15,31 @@ const app = {
     user: null,
     token: localStorage.getItem('token'),
     currentPage: 'login',
+    isServerOnline: false,
 
     init() {
         this.cacheDOM();
         this.bindEvents();
+        this.checkServerStatus();
         this.checkSession();
     },
 
+    async ensureServerOnline() {
+        if (this.isServerOnline) return true;
+        
+        // Wait up to 50 seconds for the status checker to verify the connection
+        for (let i = 0; i < 25; i++) {
+            if (this.isServerOnline) return true;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+        return this.isServerOnline;
+    },
+
     async apiFetch(endpoint, options = {}) {
+        // Automatically check and wait for server to wake up
+        await this.ensureServerOnline();
+
         const headers = {
             'Content-Type': 'application/json',
             ...options.headers,
@@ -59,6 +76,68 @@ const app = {
                 this.renderPage(event.state.page, false);
             }
         };
+    },
+
+    async checkServerStatus() {
+        const badge = document.getElementById('server-status');
+        if (!badge) return;
+        const text = badge.querySelector('.status-text');
+        
+        badge.className = 'server-status-badge waking';
+        text.textContent = 'Connecting...';
+
+        const maxAttempts = 8;
+        let attempt = 0;
+        
+        const tryPing = async () => {
+            attempt++;
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                
+                const res = await fetch(`${BACKEND_BASE_URL}/`, { 
+                    signal: controller.signal,
+                    credentials: 'omit'
+                });
+                clearTimeout(timeoutId);
+                
+                if (res.ok) {
+                    this.isServerOnline = true;
+                    badge.className = 'server-status-badge online';
+                    text.textContent = 'Server Online';
+                    return true;
+                }
+            } catch (err) {
+                console.warn(`[App] Connection attempt ${attempt} failed.`);
+            }
+            return false;
+        };
+
+        let connected = await tryPing();
+        
+        if (!connected) {
+            this.isServerOnline = false;
+            badge.className = 'server-status-badge waking';
+            text.textContent = 'Waking up Server...';
+            this.showToast('Server is sleeping on Render (Free Tier). Waking it up, please wait...', 'error');
+            
+            while (attempt < maxAttempts && !connected) {
+                await new Promise(resolve => setTimeout(resolve, 6000));
+                connected = await tryPing();
+            }
+            
+            if (!connected) {
+                this.isServerOnline = false;
+                badge.className = 'server-status-badge offline';
+                text.textContent = 'Server Offline';
+                this.showToast('Render backend failed to wake up. Check configuration or try again.', 'error');
+            } else {
+                this.isServerOnline = true;
+                this.showToast('Server is online and ready!', 'success');
+            }
+        } else {
+            this.isServerOnline = true;
+        }
     },
 
     async checkSession() {
@@ -175,9 +254,20 @@ const app = {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('login-error');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.textContent;
 
             this.showLoading(true);
             try {
+                if (!this.isServerOnline) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Waking up Server (Render)...';
+                    const online = await this.ensureServerOnline();
+                    if (!online) {
+                        throw new Error('Connection timed out. Render server did not wake up in time.');
+                    }
+                }
+
                 const res = await fetch(`${API_BASE}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -202,6 +292,8 @@ const app = {
                 errorDiv.textContent = `Cannot reach server at ${BACKEND_BASE_URL}${statusInfo}. Please check if the Render service is active and environment variables (DATABASE_URL, etc.) are set.`;
                 errorDiv.style.display = 'block';
             } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
                 this.showLoading(false);
             }
         };
@@ -235,9 +327,20 @@ const app = {
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const errorDiv = document.getElementById('reg-error');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.textContent;
 
             this.showLoading(true);
             try {
+                if (!this.isServerOnline) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Waking up Server (Render)...';
+                    const online = await this.ensureServerOnline();
+                    if (!online) {
+                        throw new Error('Connection timed out. Render server did not wake up in time.');
+                    }
+                }
+
                 const res = await this.apiFetch('/auth/send-otp', {
                     method: 'POST',
                     body: JSON.stringify({ name, email })
@@ -256,6 +359,8 @@ const app = {
                 errorDiv.textContent = `Server connection failed${info}. Please check if the Render service is awake.`;
                 errorDiv.style.display = 'block';
             } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
                 this.showLoading(false);
             }
         };

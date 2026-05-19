@@ -15,21 +15,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
-// Health check route for Render and monitoring
-app.get('/', (req: Request, res: Response) => {
-  res.json({ status: 'ok', message: 'Backend is running' });
-});
-
-app.get('/api/test-db', async (req: Request, res: Response) => {
-  try {
-    const result = await db.execute('SELECT 1');
-    res.json({ message: 'Database connection successful', result });
-  } catch (err) {
-    console.error('DB Test Error:', err);
-    res.status(500).json({ error: 'Database connection failed', details: err });
-  }
-});
-
 // Request logger - Move to top to catch all requests including CORS
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
@@ -58,6 +43,22 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Health check route for Render and monitoring
+app.get('/', (req: Request, res: Response) => {
+  res.json({ status: 'ok', message: 'Backend is running' });
+});
+
+app.get('/api/test-db', async (req: Request, res: Response) => {
+  try {
+    const result = await db.execute('SELECT 1');
+    res.json({ message: 'Database connection successful', result });
+  } catch (err) {
+    console.error('DB Test Error:', err);
+    res.status(500).json({ error: 'Database connection failed', details: err });
+  }
+});
+
 
 // --- Middleware ---
 

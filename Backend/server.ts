@@ -285,7 +285,6 @@ app.get('/api/admin/complaints', authenticate, isAdmin, async (req: Request, res
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('[Unhandled Error]', err);
 
-  // TypeScript instanceof एरर से बचने के लिए सेफ चेक
   const statusCode = err && typeof err === 'object' && 'status' in err ? (err as any).status : 500;
   const message = err && typeof err === 'object' && 'message' in err ? (err as any).message : 'Internal Server Error';
 

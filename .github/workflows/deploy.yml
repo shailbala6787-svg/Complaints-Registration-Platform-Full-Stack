@@ -1,0 +1,34 @@
+name: Deploy Frontend to GitHub Pages
+
+on:
+  push:
+    branches: ["main"] # अगर आपकी मुख्य ब्रांच का नाम master है, तो यहाँ master लिख दें
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Artifact from Frontend Folder
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './Frontend' # यह सीधे आपके Frontend फ़ोल्डर के अंदर की index.html को उठाएगा
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

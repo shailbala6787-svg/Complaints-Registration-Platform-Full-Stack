@@ -31,7 +31,7 @@ app.use(cors({
     ];
 
 
-    if (isDevelopment || !origin || allowedOrigins.some(ao => ao instanceof RegExp ? ao.test(origin) : ao === origin)) {
+    if (isDevelopment || !origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error(`Origin ${origin} not allowed by CORS`));

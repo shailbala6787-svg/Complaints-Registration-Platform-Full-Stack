@@ -27,7 +27,8 @@ app.use(cors({
     const allowedOrigins = [
       `http://localhost:${frontendPort}`,
       `http://127.0.0.1:${frontendPort}`,
-      'https://shailbala6787-svg.github.io' // Explicitly allow the GitHub Pages origin
+      'https://shailbala6787-svg.github.io', // Explicitly allow the GitHub Pages origin
+      'https://complaint.shailbala-uppolice.shop' // Explicitly allow the custom domain
     ];
 
 
